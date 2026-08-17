@@ -19,26 +19,48 @@
       --muted: #64748b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 12px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+    body { background: var(--bg); color: var(--text); padding: 16px; max-width: 1200px; margin: 0 auto; padding-bottom: 80px; }
     .header { background: var(--card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 12px; text-align: center; }
-    .header h1 { font-size: 1.25rem; margin-bottom: 8px; }
-    .stats-bar { display: flex; justify-content: space-around; gap: 8px; margin-top: 10px; }
-    .stat-card { background: #f1f5f9; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; text-align: center; flex: 1; }
-    .stat-card strong { display: block; font-size: 1.2rem; color: var(--primary); }
-    .controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-    .btn { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1; text-align: center; }
+    .header h1 { font-size: 1.35rem; margin-bottom: 8px; }
+    .stats-bar { display: flex; justify-content: space-around; gap: 12px; margin-top: 10px; }
+    .stat-card { background: #f1f5f9; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; text-align: center; flex: 1; }
+    .stat-card strong { display: block; font-size: 1.3rem; color: var(--primary); }
+    .controls { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .btn { background: var(--primary); color: white; border: none; padding: 12px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1; text-align: center; font-size: 0.95rem; }
     .btn-secondary { background: #e2e8f0; color: var(--text); }
     .btn-danger { background: #ef4444; color: white; }
-    .search-input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; font-size: 1rem; }
-    .player-list { display: flex; flex-direction: column; gap: 8px; }
+    .search-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px; font-size: 1rem; }
+    
+    /* Responsive Grid Layout for Player Cards */
+    .player-list { 
+      display: grid; 
+      grid-template-columns: 1fr; /* Single column for phones */
+      gap: 12px; 
+    }
+
+    /* 2 columns on medium screens (tablets / iPad portrait) */
+    @media (min-width: 640px) {
+      .player-list {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* 3 columns on large screens (iPad landscape / desktop) */
+    @media (min-width: 960px) {
+      .player-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
     .player-card { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; }
     .player-card.needs-plays { background: var(--warning-bg); border-color: var(--warning-border); }
-    .player-card.on-field { border-left: 5px solid var(--primary); }
-    .player-info { display: flex; align-items: center; gap: 10px; }
-    .jersey-tag { background: #0f172a; color: white; font-weight: bold; padding: 4px 8px; border-radius: 6px; min-width: 38px; text-align: center; }
-    .counter-controls { display: flex; align-items: center; gap: 8px; }
-    .btn-qty { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: white; font-weight: bold; cursor: pointer; }
-    .checkbox-field { width: 22px; height: 22px; cursor: pointer; }
+    .player-card.on-field { border-left: 6px solid var(--primary); }
+    .player-info { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+    .jersey-tag { background: #0f172a; color: white; font-weight: bold; padding: 4px 8px; border-radius: 6px; min-width: 38px; text-align: center; flex-shrink: 0; }
+    .player-name { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .counter-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .btn-qty { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: white; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+    .checkbox-field { width: 22px; height: 22px; cursor: pointer; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -61,7 +83,7 @@
 
   <div class="player-list" id="player-list"></div>
 
-  <div class="controls" style="margin-top: 16px;">
+  <div class="controls" style="margin-top: 20px;">
     <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
     <button class="btn btn-danger" onclick="resetGame()">Reset Game</button>
   </div>
@@ -190,13 +212,11 @@
             <div class="player-info">
               <input type="checkbox" class="checkbox-field" ${p.onField ? 'checked' : ''} onchange="toggleField(${p.jersey})">
               <span class="jersey-tag">#${p.jersey}</span>
-              <div>
-                <strong>${p.name}</strong>
-              </div>
+              <span class="player-name">${p.name}</span>
             </div>
             <div class="counter-controls">
               <button class="btn-qty" onclick="changePlays(${p.jersey}, -1)">-</button>
-              <span style="font-weight:bold; width:20px; text-align:center;">${p.plays}</span>
+              <span style="font-weight:bold; min-width:20px; text-align:center;">${p.plays}</span>
               <button class="btn-qty" onclick="changePlays(${p.jersey}, 1)">+</button>
             </div>
           `;
