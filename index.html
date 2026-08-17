@@ -84,7 +84,7 @@
   <div class="player-list" id="player-list"></div>
 
   <div class="controls" style="margin-top: 20px;">
-    <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+    <button class="btn btn-secondary" onclick="exportPDF()">Export PDF Summary</button>
     <button class="btn btn-danger" onclick="resetGame()">Reset Game</button>
   </div>
 
@@ -177,16 +177,86 @@
       }
     }
 
-    function exportCSV() {
-      let csv = "Jersey #,Player Name,Plays,Status\n";
+    function exportPDF() {
+      const dateStr = new Date().toLocaleDateString();
+      const needsPlaysCount = players.filter(p => p.plays < 6).length;
+      const metRequirementCount = players.filter(p => p.plays >= 6).length;
+
+      let rows = '';
       players.forEach(p => {
-        csv += `${p.jersey},"${p.name}",${p.plays},${p.plays >= 6 ? 'Met Requirement' : 'Needs Plays'}\n`;
+        const met = p.plays >= 6;
+        const statusText = met ? 'Requirement Met' : 'Needs Plays (<6)';
+        const statusBg = met ? '#dcfce7' : '#fef9c3';
+        const statusColor = met ? '#166534' : '#854d0e';
+
+        rows += `
+          <tr style="border-bottom: 1px solid #e2e8f0;">
+            <td style="padding: 8px 12px; font-weight: bold; text-align: center;">#${p.jersey}</td>
+            <td style="padding: 8px 12px;">${p.name}</td>
+            <td style="padding: 8px 12px; text-align: center; font-weight: bold;">${p.plays}</td>
+            <td style="padding: 8px 12px; text-align: center;">
+              <span style="background-color: ${statusBg}; color: ${statusColor}; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+                ${statusText}
+              </span>
+            </td>
+          </tr>
+        `;
       });
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `Game_Play_Report.csv`;
-      a.click();
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Walnut Grove Warriors - Play Count Report</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; color: #0f172a; }
+            h1 { text-align: center; font-size: 20px; margin-bottom: 4px; }
+            .subtitle { text-align: center; color: #64748b; font-size: 14px; margin-bottom: 20px; }
+            .summary-box { display: flex; justify-content: space-around; background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+            .summary-box div { font-size: 13px; color: #475569; }
+            .summary-box strong { display: block; font-size: 18px; color: #2563eb; margin-top: 4px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+            th { background-color: #0f172a; color: white; padding: 10px; text-align: left; }
+            th.center { text-align: center; }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Walnut Grove Warriors — Official Game Play Report</h1>
+          <div class="subtitle">Generated on ${dateStr}</div>
+
+          <div class="summary-box">
+            <div>Total Game Snap Count<strong>${totalGamePlays}</strong></div>
+            <div>Met Requirement (6+)<strong>${metRequirementCount}</strong></div>
+            <div>Needs Plays (<6)<strong>${needsPlaysCount}</strong></div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th class="center" style="width: 15%;">Jersey #</th>
+                <th style="width: 45%;">Player Name</th>
+                <th class="center" style="width: 15%;">Plays</th>
+                <th class="center" style="width: 25%;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          <\\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
     }
 
     function render() {
