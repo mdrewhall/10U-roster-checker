@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Youth Football Play Counter</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --warning-bg: #fef9c3;
+      --warning-border: #fde047;
+      --success-bg: #dcfce7;
+      --success-text: #166534;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 12px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+    .header { background: var(--card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 12px; text-align: center; }
+    .header h1 { font-size: 1.25rem; margin-bottom: 8px; }
+    .stats-bar { display: flex; justify-content: space-around; gap: 8px; margin-top: 10px; }
+    .stat-card { background: #f1f5f9; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; text-align: center; flex: 1; }
+    .stat-card strong { display: block; font-size: 1.2rem; color: var(--primary); }
+    .controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .btn { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1; text-align: center; }
+    .btn-secondary { background: #e2e8f0; color: var(--text); }
+    .btn-danger { background: #ef4444; color: white; }
+    .search-input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; font-size: 1rem; }
+    .player-list { display: flex; flex-direction: column; gap: 8px; }
+    .player-card { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .player-card.needs-plays { background: var(--warning-bg); border-color: var(--warning-border); }
+    .player-card.on-field { border-left: 5px solid var(--primary); }
+    .player-info { display: flex; align-items: center; gap: 10px; }
+    .jersey-tag { background: #0f172a; color: white; font-weight: bold; padding: 4px 8px; border-radius: 6px; min-width: 38px; text-align: center; }
+    .counter-controls { display: flex; align-items: center; gap: 8px; }
+    .btn-qty { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: white; font-weight: bold; cursor: pointer; }
+    .checkbox-field { width: 22px; height: 22px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Walnut Grove Warriors — Play Counter</h1>
+    <div class="stats-bar">
+      <div class="stat-card">Total Plays<strong id="total-plays">0</strong></div>
+      <div class="stat-card">On Field<strong id="on-field-count">0 / 11</strong></div>
+      <div class="stat-card">Needs Plays<strong id="needs-plays-count">31</strong></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" onclick="logPlay()">Log Play (+1 On Field)</button>
+    <button class="btn btn-secondary" onclick="clearField()">Clear Field</button>
+  </div>
+
+  <input type="text" id="search" class="search-input" placeholder="Search by name or jersey #..." oninput="render()">
+
+  <div class="player-list" id="player-list"></div>
+
+  <div class="controls" style="margin-top: 16px;">
+    <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+    <button class="btn btn-danger" onclick="resetGame()">Reset Game</button>
+  </div>
+
+  <script>
+    const initialPlayers = [
+      { jersey: 0, name: "Bowen Hall" },
+      { jersey: 1, name: "Mason Sigman" },
+      { jersey: 2, name: "Tyrone 'TJ' Shuntilius Brown, Jr." },
+      { jersey: 3, name: "James 'Zeke' Ezekial Lord" },
+      { jersey: 4, name: "Caleb Worthington" },
+      { jersey: 5, name: "Abe Townsend Thompson" },
+      { jersey: 7, name: "Phin Williams" },
+      { jersey: 9, name: "Matthew Shawn Beasley" },
+      { jersey: 10, name: "Ryder Wilson" },
+      { jersey: 11, name: "Jack Malone" },
+      { jersey: 13, name: "Greyson Myers" },
+      { jersey: 14, name: "Easton Sherlock" },
+      { jersey: 15, name: "Tanner James Sims" },
+      { jersey: 16, name: "Cody Scott Roland" },
+      { jersey: 18, name: "Cayden Jones" },
+      { jersey: 19, name: "Chance Dimitri Lowe" },
+      { jersey: 20, name: "Jayden Phillips" },
+      { jersey: 21, name: "Kal-El Thornton" },
+      { jersey: 22, name: "Nash Fiddler" },
+      { jersey: 23, name: "Josiah Eason" },
+      { jersey: 24, name: "Griffin Harris" },
+      { jersey: 25, name: "Luke Dickens" },
+      { jersey: 26, name: "Lee Hardy" },
+      { jersey: 28, name: "Ayden Jenkins" },
+      { jersey: 32, name: "Maximus Fawbush" },
+      { jersey: 42, name: "Gavin Carpenter" },
+      { jersey: 44, name: "Sam Ledford" },
+      { jersey: 58, name: "Jovanni Kelley" },
+      { jersey: 64, name: "Atticus Joyner" },
+      { jersey: 89, name: "Bennett Pressley" },
+      { jersey: 90, name: "Wyatt O'Toole" }
+    ];
+
+    let players = JSON.parse(localStorage.getItem('fb_players')) || initialPlayers.map(p => ({ ...p, plays: 0, onField: false }));
+    let totalGamePlays = parseInt(localStorage.getItem('fb_total_plays')) || 0;
+
+    function save() {
+      localStorage.setItem('fb_players', JSON.stringify(players));
+      localStorage.setItem('fb_total_plays', totalGamePlays);
+    }
+
+    function toggleField(jersey) {
+      const p = players.find(x => x.jersey === jersey);
+      const activeCount = players.filter(x => x.onField).length;
+      if (!p.onField && activeCount >= 11) {
+        alert("Field full! You already have 11 players selected.");
+        return;
+      }
+      p.onField = !p.onField;
+      save();
+      render();
+    }
+
+    function changePlays(jersey, delta) {
+      const p = players.find(x => x.jersey === jersey);
+      p.plays = Math.max(0, p.plays + delta);
+      save();
+      render();
+    }
+
+    function logPlay() {
+      const active = players.filter(p => p.onField);
+      if (active.length === 0) {
+        alert("Select at least 1 player on the field before logging a play.");
+        return;
+      }
+      active.forEach(p => p.plays++);
+      totalGamePlays++;
+      save();
+      render();
+    }
+
+    function clearField() {
+      players.forEach(p => p.onField = false);
+      save();
+      render();
+    }
+
+    function resetGame() {
+      if (confirm("Reset all play counts and total plays for a new game?")) {
+        players.forEach(p => { p.plays = 0; p.onField = false; });
+        totalGamePlays = 0;
+        save();
+        render();
+      }
+    }
+
+    function exportCSV() {
+      let csv = "Jersey #,Player Name,Plays,Status\n";
+      players.forEach(p => {
+        csv += `${p.jersey},"${p.name}",${p.plays},${p.plays >= 6 ? 'Met Requirement' : 'Needs Plays'}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Game_Play_Report.csv`;
+      a.click();
+    }
+
+    function render() {
+      const search = document.getElementById('search').value.toLowerCase();
+      const listEl = document.getElementById('player-list');
+      listEl.innerHTML = '';
+
+      const activeCount = players.filter(p => p.onField).length;
+      const needsPlays = players.filter(p => p.plays < 6).length;
+
+      document.getElementById('total-plays').innerText = totalGamePlays;
+      document.getElementById('on-field-count').innerText = `${activeCount} / 11`;
+      document.getElementById('needs-plays-count').innerText = needsPlays;
+
+      players
+        .filter(p => p.name.toLowerCase().includes(search) || p.jersey.toString().includes(search))
+        .forEach(p => {
+          const card = document.createElement('div');
+          const isNeedsPlays = p.plays < 6;
+          card.className = `player-card ${isNeedsPlays ? 'needs-plays' : ''} ${p.onField ? 'on-field' : ''}`;
+
+          card.innerHTML = `
+            <div class="player-info">
+              <input type="checkbox" class="checkbox-field" ${p.onField ? 'checked' : ''} onchange="toggleField(${p.jersey})">
+              <span class="jersey-tag">#${p.jersey}</span>
+              <div>
+                <strong>${p.name}</strong>
+              </div>
+            </div>
+            <div class="counter-controls">
+              <button class="btn-qty" onclick="changePlays(${p.jersey}, -1)">-</button>
+              <span style="font-weight:bold; width:20px; text-align:center;">${p.plays}</span>
+              <button class="btn-qty" onclick="changePlays(${p.jersey}, 1)">+</button>
+            </div>
+          `;
+          listEl.appendChild(card);
+        });
+    }
+
+    render();
+  </script>
+</body>
+</html>
