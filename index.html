@@ -275,6 +275,16 @@
     }
 
     render();
+    // Option A: Clear old storage on initial load if schema/length changes
+const EXPECTED_PLAYER_COUNT = 11;
+let savedRoster = JSON.parse(localStorage.getItem('roster'));
+
+if (savedRoster && savedRoster.length !== EXPECTED_PLAYER_COUNT) {
+  localStorage.removeItem('roster');
+  savedRoster = null; // Forces app to load your new 11-player array
+}
+
+const players = savedRoster || [ /* Your 11 players */ ];
   </script>
 </body>
 </html>
