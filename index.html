@@ -90,36 +90,17 @@
 
   <script>
     const initialPlayers = [
-      { jersey: 0, name: "Bowen Hall" },
-      { jersey: 1, name: "Mason Sigman" },
-      { jersey: 2, name: "Tyrone 'TJ' Shuntilius Brown, Jr." },
-      { jersey: 3, name: "James 'Zeke' Ezekial Lord" },
-      { jersey: 4, name: "Caleb Worthington" },
-      { jersey: 7, name: "Phin Williams" },
-      { jersey: 9, name: "Matthew Shawn Beasley" },
-      { jersey: 10, name: "Ryder Wilson" },
-      { jersey: 11, name: "Jack Malone" },
-      { jersey: 13, name: "Greyson Myers" },
+      { jersey: 9, name: "Matthew Beasley" },
       { jersey: 14, name: "Easton Sherlock" },
       { jersey: 15, name: "Tanner James Sims" },
       { jersey: 16, name: "Cody Scott Roland" },
-      { jersey: 18, name: "Cayden Jones" },
-      { jersey: 19, name: "Chance Dimitri Lowe" },
-      { jersey: 20, name: "Jayden Phillips" },
       { jersey: 21, name: "Kal-El Thornton" },
-      { jersey: 22, name: "Nash Fiddler" },
       { jersey: 23, name: "Josiah Eason" },
-      { jersey: 24, name: "Griffin Harris" },
-      { jersey: 25, name: "Luke Dickens" },
       { jersey: 26, name: "Lee Hardy" },
-      { jersey: 28, name: "Ayden Jenkins" },
-      { jersey: 32, name: "Maximus Fawbush" },
-      { jersey: 42, name: "Gavin Carpenter" },
       { jersey: 44, name: "Sam Ledford" },
       { jersey: 58, name: "Jovanni Kelley" },
-      { jersey: 64, name: "Atticus Joyner" },
       { jersey: 89, name: "Bennett Pressley" },
-      { jersey: 90, name: "Wyatt O'Toole" }
+      
     ];
 
     let players = JSON.parse(localStorage.getItem('fb_players')) || initialPlayers.map(p => ({ ...p, plays: 0, onField: false }));
