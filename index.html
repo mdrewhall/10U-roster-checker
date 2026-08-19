@@ -31,6 +31,27 @@
     .btn-danger { background: #ef4444; color: white; }
     .search-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px; font-size: 1rem; }
     
+    /* Add Player Form styling */
+    .add-player-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .add-player-card input {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    .add-player-card input[type="text"] { flex: 2; min-width: 140px; }
+    .add-player-card input[type="number"] { flex: 1; min-width: 80px; }
+    .add-player-card button { flex: 1; min-width: 120px; white-space: nowrap; }
+
     /* Responsive Grid Layout for Player Cards */
     .player-list { 
       display: grid; 
@@ -70,8 +91,15 @@
     <div class="stats-bar">
       <div class="stat-card">Total Plays<strong id="total-plays">0</strong></div>
       <div class="stat-card">On Field<strong id="on-field-count">0 / 11</strong></div>
-      <div class="stat-card">Needs Plays<strong id="needs-plays-count">31</strong></div>
+      <div class="stat-card">Needs Plays<strong id="needs-plays-count">0</strong></div>
     </div>
+  </div>
+
+  <!-- Add Player Form -->
+  <div class="add-player-card">
+    <input type="text" id="new-player-name" placeholder="Player Name">
+    <input type="number" id="new-player-jersey" placeholder="Jersey #">
+    <button class="btn" onclick="addPlayer()">Add Player</button>
   </div>
 
   <div class="controls">
@@ -90,16 +118,17 @@
 
   <script>
     const initialPlayers = [
+      { jersey: 2, name: "TJ Brown" }      
       { jersey: 9, name: "Matthew Beasley" },
       { jersey: 14, name: "Easton Sherlock" },
       { jersey: 15, name: "Tanner Sims" },
-      { jersey: 16, name: "Cody Scott Roland" },
+      { jersey: 16, name: "Cody Roland" },
       { jersey: 21, name: "Kal-El Thornton" },
       { jersey: 23, name: "Josiah Eason" },
       { jersey: 26, name: "Lee Hardy" },
       { jersey: 44, name: "Sam Ledford" },
       { jersey: 58, name: "Jovanni Kelley" },
-      { jersey: 89, name: "Bennett Pressley" },
+      { jersey: 89, name: "Bennett Pressley" }
       
     ];
 
@@ -109,6 +138,34 @@
     function save() {
       localStorage.setItem('fb_players', JSON.stringify(players));
       localStorage.setItem('fb_total_plays', totalGamePlays);
+    }
+
+    function addPlayer() {
+      const nameInput = document.getElementById('new-player-name');
+      const jerseyInput = document.getElementById('new-player-jersey');
+
+      const name = nameInput.value.trim();
+      const jersey = parseInt(jerseyInput.value, 10);
+
+      if (!name || isNaN(jersey)) {
+        alert("Please enter a valid player name and jersey number.");
+        return;
+      }
+
+      const existing = players.find(p => p.jersey === jersey);
+      if (existing) {
+        alert(`Jersey #${jersey} is already assigned to ${existing.name}.`);
+        return;
+      }
+
+      players.push({ name, jersey, plays: 0, onField: false });
+      players.sort((a, b) => a.jersey - b.jersey);
+
+      nameInput.value = '';
+      jerseyInput.value = '';
+
+      save();
+      render();
     }
 
     function toggleField(jersey) {
@@ -158,6 +215,11 @@
     }
 
     function exportPDF() {
+      const confirmed = confirm("Are you sure you want to complete this game?");
+      if (!confirmed) {
+        return; // Closes dialog and stays in app
+      }
+
       const dateStr = new Date().toLocaleDateString();
       const needsPlaysCount = players.filter(p => p.plays < 6).length;
       const metRequirementCount = players.filter(p => p.plays >= 6).length;
@@ -232,7 +294,7 @@
             window.onload = function() {
               window.print();
             };
-          <\\/script>
+          <\/script>
         </body>
         </html>
       `);
@@ -275,7 +337,6 @@
     }
 
     render();
-  
   </script>
 </body>
 </html>
