@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Youth Football Play Counter</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
   <style>
     :root {
       --bg: #f8fafc;
@@ -345,6 +347,15 @@
     }
 
     render();
+
+    // Service Worker Registration for Offline Support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('Service Worker registered successfully.'))
+          .catch((err) => console.log('Service Worker registration failed: ', err));
+      });
+    }
   </script>
 </body>
 </html>
