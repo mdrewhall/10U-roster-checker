@@ -3,12 +3,12 @@
   "name": "Youth Football Play Counter",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192.png?text=10U",
+      "src": "icon-192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "https://via.placeholder.com/512.png?text=10U",
+      "src": "icon-512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
