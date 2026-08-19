@@ -118,21 +118,28 @@
 
   <script>
     const initialPlayers = [
-      { jersey: 2, name: "TJ Brown" }      
+      { jersey: 2, name: "TJ Brown" },
       { jersey: 9, name: "Matthew Beasley" },
       { jersey: 14, name: "Easton Sherlock" },
       { jersey: 15, name: "Tanner Sims" },
-      { jersey: 16, name: "Cody Roland" },
+      { jersey: 16, name: "Cody Scott Roland" },
       { jersey: 21, name: "Kal-El Thornton" },
       { jersey: 23, name: "Josiah Eason" },
       { jersey: 26, name: "Lee Hardy" },
       { jersey: 44, name: "Sam Ledford" },
       { jersey: 58, name: "Jovanni Kelley" },
       { jersey: 89, name: "Bennett Pressley" }
-      
     ];
 
     let players = JSON.parse(localStorage.getItem('fb_players')) || initialPlayers.map(p => ({ ...p, plays: 0, onField: false }));
+    
+    // Ensure TJ Brown is always in the list even if loading an existing browser session cache
+    if (!players.some(p => p.jersey === 2)) {
+      players.push({ jersey: 2, name: "TJ Brown", plays: 0, onField: false });
+      players.sort((a, b) => a.jersey - b.jersey);
+      localStorage.setItem('fb_players', JSON.stringify(players));
+    }
+
     let totalGamePlays = parseInt(localStorage.getItem('fb_total_plays')) || 0;
 
     function save() {
