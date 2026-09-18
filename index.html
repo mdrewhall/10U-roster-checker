@@ -123,10 +123,11 @@
 
   <div class="player-list" id="player-list"></div>
 
-  <div class="controls" style="margin-top: 20px;">
-    <button class="btn btn-secondary" onclick="exportPDF()">Export PDF Summary</button>
-    <button class="btn btn-danger" onclick="resetGame()">Reset Game</button>
-  </div>
+ <div class="controls" style="margin-top: 20px;">
+  <button class="btn btn-secondary" onclick="exportPDF()">Export PDF Summary</button>
+  <button class="btn btn-danger" onclick="resetGame()">Reset Game</button>
+  <button class="btn btn-danger" style="background-color: #991b1b;" onclick="clearAppCache()">Clear Cache & Reload</button>
+</div>
 
   <script>
     // --- SCREEN WAKE LOCK LOGIC ---
@@ -392,7 +393,36 @@
           .then((reg) => console.log('Service Worker registered successfully.'))
           .catch((err) => console.log('Service Worker registration failed: ', err));
       });
+    } 
+    async function clearAppCache() {
+  const confirmed = confirm("Are you sure you want to clear all app cache and saved data? This will reset your roster and reload the latest version from the web.");
+  
+  if (!confirmed) {
+    return;
+  }
+
+  // 1. Clear LocalStorage
+  localStorage.clear();
+
+  // 2. Clear Service Worker Caches
+  if ('caches' in window) {
+    const cacheNames = await caches.keys();
+    await Promise.all(
+      cacheNames.map(cacheName => caches.delete(cacheName))
+    );
+  }
+
+  // 3. Unregister Service Workers
+  if ('serviceWorker' in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (let registration of registrations) {
+      await registration.unregister();
     }
+  }
+
+  // 4. Force a fresh reload from the server
+  window.location.reload(true);
+}
   </script>
 </body>
 </html>
