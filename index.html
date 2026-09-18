@@ -28,13 +28,6 @@
     .stats-bar { display: flex; justify-content: space-around; gap: 12px; margin-top: 10px; }
     .stat-card { background: #f1f5f9; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; text-align: center; flex: 1; }
     .stat-card strong { display: block; font-size: 1.3rem; color: var(--primary); }
-    
-    .wake-status {
-      font-size: 0.75rem;
-      color: #16a34a;
-      margin-top: 10px;
-      font-weight: 600;
-    }
 
     .controls { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
     .btn { background: var(--primary); color: white; border: none; padding: 12px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; flex: 1; text-align: center; font-size: 0.95rem; }
@@ -104,7 +97,9 @@
       <div class="stat-card">On Field<strong id="on-field-count">0 / 11</strong></div>
       <div class="stat-card">Needs Plays<strong id="needs-plays-count">0</strong></div>
     </div>
-    <div class="wake-status" id="wakeStatus">☀️ Screen Keep-Awake Active</div>
+    <button id="wakeBtn" class="btn btn-secondary" style="margin-top: 10px; font-size: 0.8rem; padding: 6px 12px;" onclick="toggleWakeLock()">
+      🌙 Screen Keep-Awake: OFF
+    </button>
   </div>
 
   <!-- Add Player Form -->
@@ -123,33 +118,65 @@
 
   <div class="player-list" id="player-list"></div>
 
- <div class="controls" style="margin-top: 20px;">
-  <button class="btn btn-secondary" onclick="exportPDF()">Export PDF Summary</button>
-  <button class="btn btn-danger" onclick="resetGame()">Reset Game</button>
-  <button class="btn btn-danger" style="background-color: #991b1b;" onclick="clearAppCache()">Clear Cache & Reload</button>
-</div>
+  <div class="controls" style="margin-top: 20px;">
+    <button class="btn btn-secondary" onclick="exportPDF()">Export PDF Summary</button>
+    <button class="btn btn-danger" onclick="resetGame()">Reset Game</button>
+    <button class="btn btn-danger" style="background-color: #991b1b;" onclick="clearAppCache()">Clear Cache & Reload</button>
+  </div>
 
   <script>
-    // --- SCREEN WAKE LOCK LOGIC ---
+    // --- MANUAL SCREEN WAKE LOCK LOGIC ---
     let wakeLock = null;
+
+    async function toggleWakeLock() {
+      if (wakeLock !== null) {
+        // If active, release it
+        try {
+          await wakeLock.release();
+        } catch (e) {
+          console.error("Wake Lock release error:", e);
+        }
+        wakeLock = null;
+        updateWakeUI(false);
+      } else {
+        // If inactive, turn it on
+        await requestWakeLock();
+      }
+    }
 
     async function requestWakeLock() {
       try {
         if ('wakeLock' in navigator) {
           wakeLock = await navigator.wakeLock.request('screen');
-          document.getElementById('wakeStatus').innerText = '☀️ Screen Keep-Awake Active';
-          document.getElementById('wakeStatus').style.color = '#16a34a';
+          updateWakeUI(true);
+
+          wakeLock.addEventListener('release', () => {
+            wakeLock = null;
+            updateWakeUI(false);
+          });
         } else {
-          document.getElementById('wakeStatus').innerText = '⚠️ Wake Lock not supported on this browser';
-          document.getElementById('wakeStatus').style.color = 'var(--muted)';
+          alert("Wake Lock API is not supported on this browser or OS.");
         }
       } catch (err) {
-        document.getElementById('wakeStatus').innerText = '⚠️ Keep-Awake inactive';
-        document.getElementById('wakeStatus').style.color = 'var(--muted)';
+        updateWakeUI(false);
+        alert("Could not activate Keep-Awake. Make sure Low Power Mode is disabled on your device.");
       }
     }
 
-    // Re-acquire Wake Lock if returning to tab/app
+    function updateWakeUI(isActive) {
+      const btn = document.getElementById('wakeBtn');
+      if (isActive) {
+        btn.innerText = '☀️ Screen Keep-Awake: ON';
+        btn.style.background = '#dcfce7';
+        btn.style.color = '#166534';
+      } else {
+        btn.innerText = '🌙 Screen Keep-Awake: OFF';
+        btn.style.background = '#e2e8f0';
+        btn.style.color = 'var(--text)';
+      }
+    }
+
+    // Re-acquire Wake Lock if returning to the app while it was enabled
     document.addEventListener('visibilitychange', async () => {
       if (wakeLock !== null && document.visibilityState === 'visible') {
         await requestWakeLock();
@@ -263,7 +290,7 @@
     function exportPDF() {
       const confirmed = confirm("Are you sure you want to complete this game?");
       if (!confirmed) {
-        return; // Closes dialog and stays in app
+        return;
       }
 
       const dateStr = new Date().toLocaleDateString();
@@ -382,8 +409,7 @@
         });
     }
 
-    // Initialize Wake Lock and App Render
-    requestWakeLock();
+    // Initialize App Render
     render();
 
     // Service Worker Registration for Offline Support
@@ -394,35 +420,36 @@
           .catch((err) => console.log('Service Worker registration failed: ', err));
       });
     } 
+
     async function clearAppCache() {
-  const confirmed = confirm("Are you sure you want to clear all app cache and saved data? This will reset your roster and reload the latest version from the web.");
-  
-  if (!confirmed) {
-    return;
-  }
+      const confirmed = confirm("Are you sure you want to clear all app cache and saved data? This will reset your roster and reload the latest version from the web.");
+      
+      if (!confirmed) {
+        return;
+      }
 
-  // 1. Clear LocalStorage
-  localStorage.clear();
+      // 1. Clear LocalStorage
+      localStorage.clear();
 
-  // 2. Clear Service Worker Caches
-  if ('caches' in window) {
-    const cacheNames = await caches.keys();
-    await Promise.all(
-      cacheNames.map(cacheName => caches.delete(cacheName))
-    );
-  }
+      // 2. Clear Service Worker Caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        );
+      }
 
-  // 3. Unregister Service Workers
-  if ('serviceWorker' in navigator) {
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    for (let registration of registrations) {
-      await registration.unregister();
+      // 3. Unregister Service Workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let registration of registrations) {
+          await registration.unregister();
+        }
+      }
+
+      // 4. Force a fresh reload from the server
+      window.location.reload(true);
     }
-  }
-
-  // 4. Force a fresh reload from the server
-  window.location.reload(true);
-}
   </script>
 </body>
 </html>
